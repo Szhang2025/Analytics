@@ -1,76 +1,77 @@
 <!DOCTYPE html>
-  <html lang="en">
-    <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CSV Data Analysis Tool</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-          <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-            <style>
-            * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            }
-          
-          body {
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data Analysis Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jstat@1.9.5/dist/jstat.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
             background-color: #f5f7fa;
-              color: #333;
-              line-height: 1.6;
+            color: #333;
+            line-height: 1.6;
             padding: 20px;
             min-height: 100vh;
-          }
-          
-          .container {
+        }
+        
+        .container {
             max-width: 1200px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-gap: 20px;
-          }
-          
-          .header {
+        }
+        
+        .header {
             grid-column: 1 / -1;
             text-align: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid #4a6fa5;
-          }
-          
-          .header h1 {
+        }
+        
+        .header h1 {
             color: #2c3e50;
-              margin-bottom: 10px;
-          }
-          
-          .panel {
+            margin-bottom: 10px;
+        }
+        
+        .panel {
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 20px;
-          }
-          
-          .upload-panel {
+        }
+        
+        .upload-panel {
             grid-column: 1;
-          }
-          
-          .analysis-panel {
+        }
+        
+        .analysis-panel {
             grid-column: 2;
-          }
-          
-          .results-panel {
+        }
+        
+        .results-panel {
             grid-column: 1 / -1;
             min-height: 500px;
-          }
-          
-          h2 {
+        }
+        
+        h2 {
             color: #4a6fa5;
-              margin-bottom: 15px;
+            margin-bottom: 15px;
             padding-bottom: 8px;
             border-bottom: 1px solid #eee;
-          }
-          
-          .file-upload-area {
+        }
+        
+        .file-upload-area {
             border: 2px dashed #4a6fa5;
             border-radius: 8px;
             padding: 30px;
@@ -78,642 +79,800 @@
             margin-bottom: 20px;
             cursor: pointer;
             transition: all 0.3s;
-          }
-          
-          .file-upload-area:hover {
+        }
+        
+        .file-upload-area:hover {
             background-color: #f0f5ff;
-          }
-          
-          .file-upload-area.dragover {
+        }
+        
+        .file-upload-area.dragover {
             background-color: #e6f0ff;
-              border-color: #2c5aa0;
-          }
-          
-          .file-upload-area i {
-            font-size: 48px;
+            border-color: #2c5aa0;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .btn {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #3a5a80;
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .select-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+        }
+        
+        .radio-option input {
+            margin-right: 8px;
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: block;
+        }
+        
+        .preview-table th, .preview-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .preview-table th {
+            background-color: #f2f6fc;
+        }
+        
+        .preview-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .statistics-output {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* Help Popup */
+        .help-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .help-popup.active {
+            display: block;
+        }
+        
+        .help-header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .help-header h3 {
+            margin: 0;
+        }
+        
+        .close-help {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .help-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .help-page {
+            display: none;
+        }
+        
+        .help-page.active {
+            display: block;
+        }
+        
+        .help-page h4 {
             color: #4a6fa5;
-              margin-bottom: 10px;
-          }
-          
-          #fileInput {
-          display: none;
-          }
-
-.btn {
-  background-color: #4a6fa5;
-    color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-}
-
-.btn:hover {
-  background-color: #3a5a80;
-}
-
-.btn:disabled {
-  background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.select-group {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #555;
-}
-
-select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-.radio-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-top: 10px;
-}
-
-.radio-option {
-  display: flex;
-  align-items: center;
-}
-
-.radio-option input {
-  margin-right: 8px;
-}
-
-.preview-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-  max-height: 300px;
-  overflow-y: auto;
-  display: block;
-}
-
-.preview-table th, .preview-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-.preview-table th {
-  background-color: #f2f6fc;
-}
-
-.preview-table tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-.chart-container {
-  position: relative;
-  height: 400px;
-  width: 100%;
-  margin-top: 20px;
-}
-
-.statistics-output {
-  background-color: #f8f9fa;
-    border-radius: 5px;
-  padding: 15px;
-  margin-top: 20px;
-  font-family: monospace;
-  white-space: pre-wrap;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-/* Help Popup */
-  .help-popup {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 350px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    overflow: hidden;
-    display: none;
-  }
-
-.help-popup.active {
-  display: block;
-}
-
-.help-header {
-  background-color: #4a6fa5;
-    color: white;
-  padding: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.help-header h3 {
-  margin: 0;
-}
-
-.close-help {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.help-content {
-  padding: 20px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.help-page {
-  display: none;
-}
-
-.help-page.active {
-  display: block;
-}
-
-.help-page h4 {
-  color: #4a6fa5;
-    margin-bottom: 10px;
-}
-
-.help-navigation {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px;
-  border-top: 1px solid #eee;
-}
-
-.page-indicator {
-  font-weight: 600;
-  color: #666;
-}
-
-.help-btn {
-  background-color: #f0f5ff;
-    border: 1px solid #4a6fa5;
-  color: #4a6fa5;
-    padding: 5px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.help-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.toggle-help {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: #4a6fa5;
-    color: white;
-  border: none;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 24px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 999;
-}
-
-.toggle-help:hover {
-  background-color: #3a5a80;
-}
-
-.error-message {
-  color: #e74c3c;
-    background-color: #fdeaea;
-    padding: 10px;
-  border-radius: 5px;
-  margin-top: 10px;
-  display: none;
-}
-
-.error-message.active {
-  display: block;
-}
-
-@media (max-width: 992px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
-  
-  .upload-panel, .analysis-panel {
-    grid-column: 1;
-  }
-  
-  .help-popup {
-    width: 300px;
-  }
-}
-</style>
-  </head>
-  <body>
-  <div class="container">
-  <div class="header">
-  <h1>CSV Data Analysis Tool</h1>
-  <p>Upload your CSV file, select variables, and perform statistical analysis with visualizations</p>
-  </div>
-  
-  <div class="panel upload-panel">
-  <h2>1. Upload CSV File</h2>
-  <div class="file-upload-area" id="dropArea">
-  <div>📊</div>
-  <p>Drag & drop your CSV file here or click to browse</p>
-  <input type="file" id="fileInput" accept=".csv">
-  <p><small>Maximum file size: 5MB</small></p>
-  </div>
-  <div class="error-message" id="uploadError"></div>
-  
-  <div id="dataPreview" style="display: none;">
-  <h3>Data Preview</h3>
-  <div class="preview-table-container">
-  <table class="preview-table" id="previewTable">
-  <!-- Data will be populated here -->
-  </table>
-  </div>
-  <p id="dataInfo" style="margin-top: 10px; font-style: italic;"></p>
-  </div>
-  </div>
-  
-  <div class="panel analysis-panel">
-  <h2>2. Analysis Configuration</h2>
-  <div class="select-group">
-  <label for="var1">First Variable (X-axis/Group)</label>
-  <select id="var1" disabled>
-  <option value="">Select a variable</option>
-  </select>
-  </div>
-  
-  <div class="select-group">
-  <label for="var2">Second Variable (Y-axis/Optional)</label>
-  <select id="var2" disabled>
-  <option value="">Select a variable (optional)</option>
-  </select>
-  </div>
-  
-  <div class="select-group">
-  <label>Analysis Type</label>
-  <div class="radio-group" id="analysisTypeGroup">
-  <!-- Options will be populated based on selected variables -->
-  </div>
-  </div>
-  
-  <button id="analyzeBtn" class="btn" disabled>Run Analysis</button>
-  <button id="resetBtn" class="btn btn-secondary">Reset</button>
-  </div>
-  
-  <div class="panel results-panel">
-  <h2>3. Analysis Results</h2>
-  <div id="resultsContainer">
-  <p style="text-align: center; padding: 40px; color: #777;">
-  Run an analysis to see results here. The chart and statistics will appear in this section.
-</p>
-  </div>
-  </div>
-  </div>
-  
-  <!-- Help Button -->
-  <button class="toggle-help" id="toggleHelp">?</button>
-  
-  <!-- Help Popup -->
-  <div class="help-popup" id="helpPopup">
-  <div class="help-header">
-  <h3>Analysis Guide</h3>
-  <button class="close-help" id="closeHelp">&times;</button>
-  </div>
-  <div class="help-content">
-  <div class="help-page active" id="page1">
-  <h4>Single Categorical Variable</h4>
-  <p><strong>Bar Plot:</strong> Shows frequency distribution of categories.</p>
-  <p><strong>Test of Proportion:</strong> Compares observed proportions to expected values (chi-square test).</p>
-  <p><strong>Confidence Interval:</strong> Calculates 95% CI for proportion of a specific category.</p>
-  </div>
-  
-  <div class="help-page" id="page2">
-  <h4>Single Continuous Variable</h4>
-  <p><strong>Histogram:</strong> Displays distribution with frequency bins.</p>
-  <p><strong>Box Plot:</strong> Shows median, quartiles, and potential outliers.</p>
-  <p><strong>Confidence Interval:</strong> Calculates 95% CI for the mean.</p>
-  <p><strong>T-test:</strong> Tests if mean differs from a specified value.</p>
-  </div>
-  
-  <div class="help-page" id="page3">
-  <h4>Two Variables Analysis</h4>
-  <p><strong>Scatter Plot:</strong> For two continuous variables, shows relationship with correlation.</p>
-  <p><strong>Grouped Bar Plot:</strong> For categorical vs categorical, shows cross-tabulation.</p>
-  <p><strong>Box Plot by Group:</strong> For categorical vs continuous, compares distributions across groups.</p>
-  <p><strong>Two-sample T-test:</strong> Compares means between two groups.</p>
-  <p><strong>Chi-square Test:</strong> Tests association between two categorical variables.</p>
-  </div>
-  
-  <div class="help-page" id="page4">
-  <h4>How to Use This Tool</h4>
-  <ol>
-  <li>Upload a CSV file with your data</li>
-  <li>Select one or two variables for analysis</li>
-  <li>Choose the appropriate analysis type based on variable types</li>
-  <li>Click "Run Analysis" to generate results</li>
-  <li>Use this guide for interpretation help</li>
-  </ol>
-  <p><strong>Note:</strong> The app automatically detects variable types (categorical/continuous) based on data content.</p>
-  </div>
-  </div>
-  <div class="help-navigation">
-  <button class="help-btn" id="prevPage" disabled>Previous</button>
-  <span class="page-indicator">Page <span id="currentPage">1</span> of 4</span>
-  <button class="help-btn" id="nextPage">Next</button>
-  </div>
-  </div>
-  
-  <script>
-  // Global variables
-let csvData = [];
-let headers = [];
-let columnTypes = {};
-let currentHelpPage = 1;
-let currentChart = null;
-
-// DOM elements
-const fileInput = document.getElementById('fileInput');
-const dropArea = document.getElementById('dropArea');
-const uploadError = document.getElementById('uploadError');
-const dataPreview = document.getElementById('dataPreview');
-const previewTable = document.getElementById('previewTable');
-const dataInfo = document.getElementById('dataInfo');
-const var1Select = document.getElementById('var1');
-const var2Select = document.getElementById('var2');
-const analysisTypeGroup = document.getElementById('analysisTypeGroup');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const resetBtn = document.getElementById('resetBtn');
-const resultsContainer = document.getElementById('resultsContainer');
-const toggleHelp = document.getElementById('toggleHelp');
-const helpPopup = document.getElementById('helpPopup');
-const closeHelp = document.getElementById('closeHelp');
-const prevPageBtn = document.getElementById('prevPage');
-const nextPageBtn = document.getElementById('nextPage');
-const currentPageSpan = document.getElementById('currentPage');
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-  // File upload events
-  dropArea.addEventListener('click', () => fileInput.click());
-  dropArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropArea.classList.add('dragover');
-  });
-  dropArea.addEventListener('dragleave', () => {
-    dropArea.classList.remove('dragover');
-  });
-  dropArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropArea.classList.remove('dragover');
-    if (e.dataTransfer.files.length) {
-      fileInput.files = e.dataTransfer.files;
-      handleFileUpload(e.dataTransfer.files[0]);
-    }
-  });
-  
-  fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length) {
-      handleFileUpload(e.target.files[0]);
-    }
-  });
-  
-  // Variable selection events
-  var1Select.addEventListener('change', updateAnalysisOptions);
-  var2Select.addEventListener('change', updateAnalysisOptions);
-  
-  // Analysis button
-  analyzeBtn.addEventListener('click', runAnalysis);
-  
-  // Reset button
-  resetBtn.addEventListener('click', resetApp);
-  
-  // Help popup events
-  toggleHelp.addEventListener('click', toggleHelpPopup);
-  closeHelp.addEventListener('click', toggleHelpPopup);
-  prevPageBtn.addEventListener('click', () => changeHelpPage(-1));
-  nextPageBtn.addEventListener('click', () => changeHelpPage(1));
-  
-  // Initialize with sample data
-  loadSampleData();
-});
-
-// Functions
-function handleFileUpload(file) {
-  // Validate file
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    showUploadError('Please upload a CSV file.');
-    return;
-  }
-  
-  if (file.size > 5 * 1024 * 1024) {
-    showUploadError('File size must be less than 5MB.');
-    return;
-  }
-  
-  // Parse CSV
-  Papa.parse(file, {
-    header: true,
-    dynamicTyping: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      if (results.errors.length) {
-        showUploadError('Error parsing CSV file: ' + results.errors[0].message);
-        return;
-      }
-      
-      csvData = results.data;
-      headers = results.meta.fields;
-      
-      if (csvData.length === 0) {
-        showUploadError('CSV file is empty or could not be parsed.');
-        return;
-      }
-      
-      // Determine column types
-      determineColumnTypes();
-      
-      // Update UI
-      updateDataPreview();
-      updateVariableSelects();
-      clearUploadError();
-      dataPreview.style.display = 'block';
-      analyzeBtn.disabled = false;
-      
-      // Show success message
-      dataInfo.textContent = `Loaded ${csvData.length} rows with ${headers.length} variables.`;
-    },
-    error: function(error) {
-      showUploadError('Error reading file: ' + error.message);
-    }
-  });
-}
-
-function determineColumnTypes() {
-  columnTypes = {};
-  
-  headers.forEach(header => {
-    // Sample first 10 non-null values
-    const sampleValues = csvData
-    .map(row => row[header])
-    .filter(val => val !== null && val !== undefined && val !== '')
-    .slice(0, 10);
+            margin-bottom: 10px;
+        }
+        
+        .help-navigation {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .page-indicator {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .help-btn {
+            background-color: #f0f5ff;
+            border: 1px solid #4a6fa5;
+            color: #4a6fa5;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .help-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .toggle-help {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+        }
+        
+        .toggle-help:hover {
+            background-color: #3a5a80;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            background-color: #fdeaea;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .error-message.active {
+            display: block;
+        }
+        
+        .test-params {
+            background-color: #f0f5ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .test-params.active {
+            display: block;
+        }
+        
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-panel, .analysis-panel {
+                grid-column: 1;
+            }
+            
+            .help-popup {
+                width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CSV Data Analysis Tool</h1>
+            <p>Upload your CSV file, select variables, and perform statistical analysis with visualizations</p>
+        </div>
+        
+        <div class="panel upload-panel">
+            <h2>1. Upload CSV File</h2>
+            <div class="file-upload-area" id="dropArea">
+                <div>📊</div>
+                <p>Drag & drop your CSV file here or click to browse</p>
+                <input type="file" id="fileInput" accept=".csv">
+                <p><small>Maximum file size: 5MB</small></p>
+            </div>
+            <div class="error-message" id="uploadError"></div>
+            
+            <div id="dataPreview" style="display: none;">
+                <h3>Data Preview</h3>
+                <div class="preview-table-container">
+                    <table class="preview-table" id="previewTable">
+                        <!-- Data will be populated here -->
+                    </table>
+                </div>
+                <p id="dataInfo" style="margin-top: 10px; font-style: italic;"></p>
+            </div>
+        </div>
+        
+        <div class="panel analysis-panel">
+            <h2>2. Analysis Configuration</h2>
+            <div class="select-group">
+                <label for="var1">First Variable (X-axis/Group)</label>
+                <select id="var1" disabled>
+                    <option value="">Select a variable</option>
+                </select>
+            </div>
+            
+            <div class="select-group">
+                <label for="var2">Second Variable (Y-axis/Optional)</label>
+                <select id="var2" disabled>
+                    <option value="">Select a variable (optional)</option>
+                </select>
+            </div>
+            
+            <div class="select-group">
+                <label>Analysis Type</label>
+                <div class="radio-group" id="analysisTypeGroup">
+                    <!-- Options will be populated based on selected variables -->
+                </div>
+            </div>
+            
+            <div class="test-params" id="testParams">
+                <h4>Test Parameters</h4>
+                <div id="proportionTestParams" style="display: none;">
+                    <label for="expectedProportions">Expected Proportions (comma-separated)</label>
+                    <input type="text" id="expectedProportions" placeholder="0.25,0.25,0.25,0.25">
+                </div>
+                <div id="tTestParams" style="display: none;">
+                    <label for="testValue">Test Value (μ₀)</label>
+                    <input type="number" id="testValue" step="0.01" value="0">
+                </div>
+                <div id="propCIParams" style="display: none;">
+                    <label for="confidenceLevel">Confidence Level (%)</label>
+                    <input type="number" id="confidenceLevel" min="1" max="99" value="95">
+                </div>
+            </div>
+            
+            <button id="analyzeBtn" class="btn" disabled>Run Analysis</button>
+            <button id="resetBtn" class="btn btn-secondary">Reset</button>
+        </div>
+        
+        <div class="panel results-panel">
+            <h2>3. Analysis Results</h2>
+            <div id="resultsContainer">
+                <p style="text-align: center; padding: 40px; color: #777;">
+                    Run an analysis to see results here. The chart and statistics will appear in this section.
+                </p>
+            </div>
+        </div>
+    </div>
     
-    if (sampleValues.length === 0) {
-      columnTypes[header] = 'unknown';
-      return;
-    }
+    <!-- Help Button -->
+    <button class="toggle-help" id="toggleHelp">?</button>
     
-    // Check if all sampled values are numbers
-    const allNumeric = sampleValues.every(val => typeof val === 'number' && !isNaN(val));
-    
-    // Also check if the column name suggests it's categorical
-                const categoricalKeywords = ['category', 'type', 'group', 'status', 'color', 'gender', 'class'];
-                const nameSuggestsCategorical = categoricalKeywords.some(keyword => 
-                    header.toLowerCase().includes(keyword));
+    <!-- Help Popup -->
+    <div class="help-popup" id="helpPopup">
+        <div class="help-header">
+            <h3>Analysis Guide</h3>
+            <button class="close-help" id="closeHelp">&times;</button>
+        </div>
+        <div class="help-content">
+            <div class="help-page active" id="page1">
+                <h4>Single Categorical Variable</h4>
+                <p><strong>Bar Plot:</strong> Shows frequency distribution of categories.</p>
+                <p><strong>Test of Proportion:</strong> Chi-square goodness-of-fit test comparing observed to expected proportions.</p>
+                <p><strong>Confidence Interval:</strong> Calculates CI for proportion of a specific category.</p>
+            </div>
+            
+            <div class="help-page" id="page2">
+                <h4>Single Continuous Variable</h4>
+                <p><strong>Histogram:</strong> Displays distribution with frequency bins.</p>
+                <p><strong>Box Plot:</strong> Shows median, quartiles, and potential outliers.</p>
+                <p><strong>Confidence Interval:</strong> Calculates CI for the mean.</p>
+                <p><strong>T-test:</strong> One-sample t-test against specified value.</p>
+            </div>
+            
+            <div class="help-page" id="page3">
+                <h4>Two Variables Analysis</h4>
+                <p><strong>Scatter Plot:</strong> For two continuous variables, shows relationship.</p>
+                <p><strong>Grouped Bar Plot:</strong> For categorical vs categorical, shows cross-tabulation.</p>
+                <p><strong>Box Plot by Group:</strong> For categorical vs continuous, compares distributions.</p>
+                <p><strong>Two-sample T-test:</strong> Compares means between two groups.</p>
+                <p><strong>Chi-square Test:</strong> Tests association between categorical variables.</p>
+            </div>
+        </div>
+        <div class="help-navigation">
+            <button class="help-btn" id="prevPage" disabled>Previous</button>
+            <span class="page-indicator">Page <span id="currentPage">1</span> of 3</span>
+            <button class="help-btn" id="nextPage">Next</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let csvData = [];
+        let headers = [];
+        let columnTypes = {};
+        let currentHelpPage = 1;
+        let currentChart = null;
+        
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('dropArea');
+        const uploadError = document.getElementById('uploadError');
+        const dataPreview = document.getElementById('dataPreview');
+        const previewTable = document.getElementById('previewTable');
+        const dataInfo = document.getElementById('dataInfo');
+        const var1Select = document.getElementById('var1');
+        const var2Select = document.getElementById('var2');
+        const analysisTypeGroup = document.getElementById('analysisTypeGroup');
+        const testParams = document.getElementById('testParams');
+        const proportionTestParams = document.getElementById('proportionTestParams');
+        const tTestParams = document.getElementById('tTestParams');
+        const propCIParams = document.getElementById('propCIParams');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const toggleHelp = document.getElementById('toggleHelp');
+        const helpPopup = document.getElementById('helpPopup');
+        const closeHelp = document.getElementById('closeHelp');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const currentPageSpan = document.getElementById('currentPage');
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // File upload events
+            dropArea.addEventListener('click', () => fileInput.click());
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            });
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('dragover');
+            });
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileUpload(e.dataTransfer.files[0]);
+                }
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+            
+            // Variable selection events
+            var1Select.addEventListener('change', updateAnalysisOptions);
+            var2Select.addEventListener('change', updateAnalysisOptions);
+            
+            // Analysis button
+            analyzeBtn.addEventListener('click', runAnalysis);
+            
+            // Reset button
+            resetBtn.addEventListener('click', resetApp);
+            
+            // Help popup events
+            toggleHelp.addEventListener('click', toggleHelpPopup);
+            closeHelp.addEventListener('click', toggleHelpPopup);
+            prevPageBtn.addEventListener('click', () => changeHelpPage(-1));
+            nextPageBtn.addEventListener('click', () => changeHelpPage(1));
+            
+            // Load sample data
+            loadSampleData();
+        });
+        
+        // Statistical Functions
+        function mean(data) {
+            return data.reduce((a, b) => a + b, 0) / data.length;
+        }
+        
+        function variance(data) {
+            const m = mean(data);
+            return data.reduce((a, b) => a + Math.pow(b - m, 2), 0) / (data.length - 1);
+        }
+        
+        function stdDev(data) {
+            return Math.sqrt(variance(data));
+        }
+        
+        function median(data) {
+            const sorted = [...data].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+        
+        function quartiles(data) {
+            const sorted = [...data].sort((a, b) => a - b);
+            const q1 = sorted[Math.floor(sorted.length * 0.25)];
+            const q2 = median(sorted);
+            const q3 = sorted[Math.floor(sorted.length * 0.75)];
+            return { q1, q2, q3 };
+        }
+        
+        function correlation(x, y) {
+            const n = x.length;
+            const meanX = mean(x);
+            const meanY = mean(y);
+            
+            let numerator = 0;
+            let denomX = 0;
+            let denomY = 0;
+            
+            for (let i = 0; i < n; i++) {
+                numerator += (x[i] - meanX) * (y[i] - meanY);
+                denomX += Math.pow(x[i] - meanX, 2);
+                denomY += Math.pow(y[i] - meanY, 2);
+            }
+            
+            return numerator / Math.sqrt(denomX * denomY);
+        }
+        
+        function chiSquareGoodnessOfFit(observed, expected) {
+            let chi2 = 0;
+            for (let i = 0; i < observed.length; i++) {
+                chi2 += Math.pow(observed[i] - expected[i], 2) / expected[i];
+            }
+            
+            const df = observed.length - 1;
+            const pValue = 1 - jStat.chisquare.cdf(chi2, df);
+            
+            return { chi2, df, pValue };
+        }
+        
+        function chiSquareIndependence(contingencyTable) {
+            const rows = contingencyTable.length;
+            const cols = contingencyTable[0].length;
+            
+            // Calculate row and column totals
+            const rowTotals = Array(rows).fill(0);
+            const colTotals = Array(cols).fill(0);
+            let grandTotal = 0;
+            
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    rowTotals[i] += contingencyTable[i][j];
+                    colTotals[j] += contingencyTable[i][j];
+                    grandTotal += contingencyTable[i][j];
+                }
+            }
+            
+            // Calculate expected frequencies
+            const expected = Array(rows).fill().map(() => Array(cols).fill(0));
+            let chi2 = 0;
+            
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    expected[i][j] = (rowTotals[i] * colTotals[j]) / grandTotal;
+                    chi2 += Math.pow(contingencyTable[i][j] - expected[i][j], 2) / expected[i][j];
+                }
+            }
+            
+            const df = (rows - 1) * (cols - 1);
+            const pValue = 1 - jStat.chisquare.cdf(chi2, df);
+            
+            return { chi2, df, pValue, expected };
+        }
+        
+        function tTestOneSample(data, mu0) {
+            const n = data.length;
+            const sampleMean = mean(data);
+            const sampleStd = stdDev(data);
+            const stdError = sampleStd / Math.sqrt(n);
+            const t = (sampleMean - mu0) / stdError;
+            const df = n - 1;
+            const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(t), df));
+            
+            return { t, df, pValue, sampleMean, stdError };
+        }
+        
+        function tTestTwoSample(data1, data2, equalVar = true) {
+            const n1 = data1.length;
+            const n2 = data2.length;
+            const mean1 = mean(data1);
+            const mean2 = mean(data2);
+            const var1 = variance(data1);
+            const var2 = variance(data2);
+            
+            let t, df;
+            
+            if (equalVar) {
+                const pooledVar = ((n1 - 1) * var1 + (n2 - 1) * var2) / (n1 + n2 - 2);
+                const stdError = Math.sqrt(pooledVar * (1/n1 + 1/n2));
+                t = (mean1 - mean2) / stdError;
+                df = n1 + n2 - 2;
+            } else {
+                const stdError = Math.sqrt(var1/n1 + var2/n2);
+                t = (mean1 - mean2) / stdError;
+                const dfNum = Math.pow(var1/n1 + var2/n2, 2);
+                const dfDen = Math.pow(var1/n1, 2)/(n1-1) + Math.pow(var2/n2, 2)/(n2-1);
+                df = dfNum / dfDen;
+            }
+            
+            const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(t), df));
+            
+            return { t, df, pValue, mean1, mean2, var1, var2 };
+        }
+        
+        function confidenceIntervalMean(data, confidenceLevel = 0.95) {
+            const n = data.length;
+            const sampleMean = mean(data);
+            const sampleStd = stdDev(data);
+            const stdError = sampleStd / Math.sqrt(n);
+            const z = jStat.normal.inv(1 - (1 - confidenceLevel) / 2, 0, 1);
+            const margin = z * stdError;
+            
+            return {
+                lower: sampleMean - margin,
+                upper: sampleMean + margin,
+                mean: sampleMean,
+                margin: margin
+            };
+        }
+        
+        function confidenceIntervalProportion(count, total, confidenceLevel = 0.95) {
+            const p = count / total;
+            const z = jStat.normal.inv(1 - (1 - confidenceLevel) / 2, 0, 1);
+            const margin = z * Math.sqrt(p * (1 - p) / total);
+            
+            return {
+                lower: Math.max(0, p - margin),
+                upper: Math.min(1, p + margin),
+                proportion: p,
+                margin: margin
+            };
+        }
+        
+        // Application Functions
+        function handleFileUpload(file) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showUploadError('Please upload a CSV file.');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showUploadError('File size must be less than 5MB.');
+                return;
+            }
+            
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length) {
+                        showUploadError('Error parsing CSV file: ' + results.errors[0].message);
+                        return;
+                    }
+                    
+                    csvData = results.data;
+                    headers = results.meta.fields;
+                    
+                    if (csvData.length === 0) {
+                        showUploadError('CSV file is empty or could not be parsed.');
+                        return;
+                    }
+                    
+                    determineColumnTypes();
+                    updateDataPreview();
+                    updateVariableSelects();
+                    clearUploadError();
+                    dataPreview.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                    
+                    dataInfo.textContent = `Loaded ${csvData.length} rows with ${headers.length} variables.`;
+                },
+                error: function(error) {
+                    showUploadError('Error reading file: ' + error.message);
+                }
+            });
+        }
+        
+        function determineColumnTypes() {
+            columnTypes = {};
+            
+            headers.forEach(header => {
+                const sampleValues = csvData
+                    .map(row => row[header])
+                    .filter(val => val !== null && val !== undefined && val !== '')
+                    .slice(0, 20);
                 
-                // If all numeric and name doesn't suggest categorical, treat as continuous
-    if (allNumeric && !nameSuggestsCategorical) {
-      columnTypes[header] = 'continuous';
-    } else {
-      // Otherwise treat as categorical (or ordinal)
-      columnTypes[header] = 'categorical';
-    }
-  });
-}
-
-function updateDataPreview() {
-  // Clear previous preview
-  previewTable.innerHTML = '';
-  
-  // Create header row
-  let thead = '<tr>';
-  headers.forEach(header => {
-    const type = columnTypes[header];
-    const typeIcon = type === 'continuous' ? '🔢' : '📊';
-    thead += `<th>${header} ${typeIcon}</th>`;
-  });
-  thead += '</tr>';
-  previewTable.innerHTML = thead;
-  
-  // Create data rows (first 5 rows only)
-  const previewRows = Math.min(5, csvData.length);
-  for (let i = 0; i < previewRows; i++) {
-    let row = '<tr>';
-    headers.forEach(header => {
-      const value = csvData[i][header];
-      row += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
-    });
-    row += '</tr>';
-    previewTable.innerHTML += row;
-  }
-}
-
-function updateVariableSelects() {
-  // Clear current options
-  var1Select.innerHTML = '<option value="">Select a variable</option>';
-  var2Select.innerHTML = '<option value="">Select a variable (optional)</option>';
-  
-  // Enable selects
-  var1Select.disabled = false;
-  var2Select.disabled = false;
-  
-  // Add options
-  headers.forEach(header => {
-    const type = columnTypes[header];
-    const typeLabel = type === 'continuous' ? ' (Continuous)' : ' (Categorical)';
-    
-    const option1 = document.createElement('option');
-    option1.value = header;
-    option1.textContent = header + typeLabel;
-    var1Select.appendChild(option1);
-    
-    const option2 = document.createElement('option');
-    option2.value = header;
-    option2.textContent = header + typeLabel;
-    var2Select.appendChild(option2);
-  });
-}
-
-function updateAnalysisOptions() {
-  const var1 = var1Select.value;
-  const var2 = var2Select.value;
-  
-  // Clear previous options
-  analysisTypeGroup.innerHTML = '';
-  
-  if (!var1) return;
-  
-  const var1Type = columnTypes[var1];
-  const var2Type = var2 ? columnTypes[var2] : null;
-  
-  let options = [];
-  
-  if (!var2) {
-    // Single variable analysis
-    if (var1Type === 'categorical') {
-      options = [
-        { value: 'barplot', label: 'Bar Plot' },
-        { value: 'proportion_test', label: 'Test of Proportion' },
-        { value: 'proportion_ci', label: 'Confidence Interval for Proportion' }
-      ];
-    } else {
-      options = [
-        { value: 'histogram', label: 'Histogram' },
-        { value: 'boxplot', label: 'Box Plot' },
-        { value: 'mean_ci', label: 'Confidence Interval for Mean' },
-        { value: 't_test', label: 'One-sample T-test' }
-      ];
-    }
-  } else {
-    // Two variable analysis
-    if (var1Type === 'categorical' && var2Type === 'categorical') {
-      options = [
-        { value: 'grouped_bar', label: 'Grouped Bar Plot' },
-        { value: 'chi_square', label: 'Chi-square Test' }
-      ];
-    } else if (var1Type === 'categorical' && var2Type === 'continuous') {
-      options = [
-        { value: 'boxplot_group', label: 'Box Plot by Group' },
-        { value: 'two_sample_t', label: 'Two-sample T-test' }
-      ];
-    } else if (var1Type === 'continuous' && var2Type === 'continuous') {
-      options = [
-        { value: 'scatter', label: 'Scatter Plot' },
-        { value: 'correlation', label: 'Correlation Analysis' }
-      ];
-    } else if (var1Type === 'continuous' && var2Type === 'categorical') {
-      // Swap would be better, but for simplicity we'll offer same options
+                if (sampleValues.length === 0) {
+                    columnTypes[header] = 'unknown';
+                    return;
+                }
+                
+                // Check if values are numeric
+                const numericCount = sampleValues.filter(val => typeof val === 'number' && !isNaN(val)).length;
+                const numericRatio = numericCount / sampleValues.length;
+                
+                // If more than 70% are numeric, treat as continuous
+                if (numericRatio > 0.7) {
+                    columnTypes[header] = 'continuous';
+                } else {
+                    columnTypes[header] = 'categorical';
+                }
+            });
+        }
+        
+        function updateDataPreview() {
+            previewTable.innerHTML = '';
+            
+            let thead = '<tr>';
+            headers.forEach(header => {
+                const type = columnTypes[header];
+                const typeIcon = type === 'continuous' ? '🔢' : '📊';
+                thead += `<th>${header} ${typeIcon}</th>`;
+            });
+            thead += '</tr>';
+            previewTable.innerHTML = thead;
+            
+            const previewRows = Math.min(5, csvData.length);
+            for (let i = 0; i < previewRows; i++) {
+                let row = '<tr>';
+                headers.forEach(header => {
+                    const value = csvData[i][header];
+                    row += `<td>${value !== null && value !== undefined ? value : ''}</td>`;
+                });
+                row += '</tr>';
+                previewTable.innerHTML += row;
+            }
+        }
+        
+        function updateVariableSelects() {
+            var1Select.innerHTML = '<option value="">Select a variable</option>';
+            var2Select.innerHTML = '<option value="">Select a variable (optional)</option>';
+            
+            var1Select.disabled = false;
+            var2Select.disabled = false;
+            
+            headers.forEach(header => {
+                const type = columnTypes[header];
+                const typeLabel = type === 'continuous' ? ' (Continuous)' : ' (Categorical)';
+                
+                const option1 = document.createElement('option');
+                option1.value = header;
+                option1.textContent = header + typeLabel;
+                var1Select.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = header;
+                option2.textContent = header + typeLabel;
+                var2Select.appendChild(option2);
+            });
+        }
+        
+        function updateAnalysisOptions() {
+            const var1 = var1Select.value;
+            const var2 = var2Select.value;
+            
+            analysisTypeGroup.innerHTML = '';
+            testParams.classList.remove('active');
+            proportionTestParams.style.display = 'none';
+            tTestParams.style.display = 'none';
+            propCIParams.style.display = 'none';
+            
+            if (!var1) return;
+            
+            const var1Type = columnTypes[var1];
+            const var2Type = var2 ? columnTypes[var2] : null;
+            
+            let options = [];
+            
+            if (!var2) {
+                if (var1Type === 'categorical') {
+                    options = [
+                        { value: 'barplot', label: 'Bar Plot' },
+                        { value: 'proportion_test', label: 'Test of Proportion' },
+                        { value: 'proportion_ci', label: 'Confidence Interval for Proportion' }
+                    ];
+                } else {
+                    options = [
+                        { value: 'histogram', label: 'Histogram' },
+                        { value: 'boxplot', label: 'Box Plot' },
+                        { value: 'mean_ci', label: 'Confidence Interval for Mean' },
+                        { value: 't_test', label: 'One-sample T-test' }
+                    ];
+                }
+            } else {
+                if (var1Type === 'categorical' && var2Type === 'categorical') {
+                    options = [
+                        { value: 'grouped_bar', label: 'Grouped Bar Plot' },
+                        { value: 'chi_square', label: 'Chi-square Test' }
+                    ];
+                } else if (var1Type === 'categorical' && var2Type === 'continuous') {
+                    options = [
+                        { value: 'boxplot_group', label: 'Box Plot by Group' },
+                        { value: 'two_sample_t', label: 'Two-sample T-test' }
+                    ];
+                } else if (var1Type === 'continuous' && var2Type === 'continuous') {
+                    options = [
+                        { value: 'scatter', label: 'Scatter Plot' },
+                        { value: 'correlation', label: 'Correlation Analysis' }
+                    ];
+                } else if (var1Type === 'continuous' && var2Type === 'categorical') {
                     options = [
                         { value: 'boxplot_group', label: 'Box Plot by Group' },
                         { value: 'two_sample_t', label: 'Two-sample T-test' }
@@ -721,7 +880,6 @@ function updateAnalysisOptions() {
                 }
             }
             
-            // Create radio buttons
             options.forEach((option, index) => {
                 const div = document.createElement('div');
                 div.className = 'radio-option';
@@ -731,6 +889,9 @@ function updateAnalysisOptions() {
                 input.id = `analysis_${option.value}`;
                 input.name = 'analysisType';
                 input.value = option.value;
+                input.addEventListener('change', function() {
+                    updateTestParams(option.value);
+                });
                 if (index === 0) input.checked = true;
                 
                 const label = document.createElement('label');
@@ -742,8 +903,23 @@ function updateAnalysisOptions() {
                 analysisTypeGroup.appendChild(div);
             });
             
-            // Update help popup based on selection
+            updateTestParams(options[0].value);
             updateHelpPopup(var1Type, var2Type);
+        }
+        
+        function updateTestParams(analysisType) {
+            testParams.classList.add('active');
+            proportionTestParams.style.display = 'none';
+            tTestParams.style.display = 'none';
+            propCIParams.style.display = 'none';
+            
+            if (analysisType === 'proportion_test') {
+                proportionTestParams.style.display = 'block';
+            } else if (analysisType === 't_test') {
+                tTestParams.style.display = 'block';
+            } else if (analysisType === 'mean_ci' || analysisType === 'proportion_ci') {
+                propCIParams.style.display = 'block';
+            }
         }
         
         function runAnalysis() {
@@ -756,37 +932,30 @@ function updateAnalysisOptions() {
                 return;
             }
             
-            // Clear previous results
             resultsContainer.innerHTML = '';
             
-            // Destroy previous chart if exists
             if (currentChart) {
                 currentChart.destroy();
             }
             
-            // Show loading indicator
             resultsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">Running analysis...</p>';
             
-            // Simulate processing delay for better UX
             setTimeout(() => {
                 performAnalysis(var1, var2, analysisType);
-            }, 300);
+            }, 100);
         }
         
         function performAnalysis(var1, var2, analysisType) {
             const var1Type = columnTypes[var1];
             const var2Type = var2 ? columnTypes[var2] : null;
             
-            // Extract data for selected variables
             const var1Data = csvData.map(row => row[var1]).filter(val => val != null);
             const var2Data = var2 ? csvData.map(row => row[var2]).filter(val => val != null) : null;
             
-            // Create chart container
             const chartContainer = document.createElement('div');
             chartContainer.className = 'chart-container';
             resultsContainer.appendChild(chartContainer);
             
-            // Create statistics output
             const statsOutput = document.createElement('div');
             statsOutput.className = 'statistics-output';
             resultsContainer.appendChild(statsOutput);
@@ -794,22 +963,23 @@ function updateAnalysisOptions() {
             let chartConfig = null;
             let statsText = '';
             
-            // Determine which analysis to perform
             if (!var2) {
-                // Single variable analysis
                 if (var1Type === 'categorical') {
                     if (analysisType === 'barplot') {
                         chartConfig = createBarChartConfig(var1, var1Data);
                         statsText = generateCategoricalStats(var1, var1Data);
                     } else if (analysisType === 'proportion_test') {
+                        const expectedProportions = document.getElementById('expectedProportions').value
+                            .split(',')
+                            .map(p => parseFloat(p.trim()));
                         chartConfig = createBarChartConfig(var1, var1Data);
-                        statsText = generateProportionTestStats(var1, var1Data);
+                        statsText = performProportionTest(var1, var1Data, expectedProportions);
                     } else if (analysisType === 'proportion_ci') {
+                        const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value) / 100;
                         chartConfig = createBarChartConfig(var1, var1Data);
-                        statsText = generateProportionCIStats(var1, var1Data);
+                        statsText = performProportionCI(var1, var1Data, confidenceLevel);
                     }
                 } else {
-                    // Continuous variable
                     if (analysisType === 'histogram') {
                         chartConfig = createHistogramConfig(var1, var1Data);
                         statsText = generateContinuousStats(var1, var1Data);
@@ -817,26 +987,26 @@ function updateAnalysisOptions() {
                         chartConfig = createBoxPlotConfig(var1, var1Data);
                         statsText = generateContinuousStats(var1, var1Data);
                     } else if (analysisType === 'mean_ci') {
+                        const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value) / 100;
                         chartConfig = createHistogramConfig(var1, var1Data);
-                        statsText = generateMeanCIStats(var1, var1Data);
+                        statsText = performMeanCI(var1, var1Data, confidenceLevel);
                     } else if (analysisType === 't_test') {
+                        const testValue = parseFloat(document.getElementById('testValue').value);
                         chartConfig = createHistogramConfig(var1, var1Data);
-                        statsText = generateTTestStats(var1, var1Data);
+                        statsText = performOneSampleTTest(var1, var1Data, testValue);
                     }
                 }
             } else {
-                // Two variable analysis
                 if (var1Type === 'categorical' && var2Type === 'categorical') {
                     if (analysisType === 'grouped_bar') {
                         chartConfig = createGroupedBarChartConfig(var1, var2, var1Data, var2Data);
                         statsText = generateTwoCategoricalStats(var1, var2, var1Data, var2Data);
                     } else if (analysisType === 'chi_square') {
                         chartConfig = createGroupedBarChartConfig(var1, var2, var1Data, var2Data);
-                        statsText = generateChiSquareStats(var1, var2, var1Data, var2Data);
+                        statsText = performChiSquareTest(var1, var2, var1Data, var2Data);
                     }
                 } else if ((var1Type === 'categorical' && var2Type === 'continuous') || 
                           (var1Type === 'continuous' && var2Type === 'categorical')) {
-                    // Determine which is categorical and which is continuous
                     const catVar = var1Type === 'categorical' ? var1 : var2;
                     const contVar = var1Type === 'continuous' ? var1 : var2;
                     const catData = var1Type === 'categorical' ? var1Data : var2Data;
@@ -846,9 +1016,8 @@ function updateAnalysisOptions() {
                         chartConfig = createGroupedBoxPlotConfig(catVar, contVar, catData, contData);
                         statsText = generateCategoricalContinuousStats(catVar, contVar, catData, contData);
                     } else if (analysisType === 'two_sample_t') {
-                        // For simplicity, handle only case with exactly 2 groups
                         chartConfig = createGroupedBoxPlotConfig(catVar, contVar, catData, contData);
-                        statsText = generateTwoSampleTTestStats(catVar, contVar, catData, contData);
+                        statsText = performTwoSampleTTest(catVar, contVar, catData, contData);
                     }
                 } else if (var1Type === 'continuous' && var2Type === 'continuous') {
                     if (analysisType === 'scatter') {
@@ -856,24 +1025,21 @@ function updateAnalysisOptions() {
                         statsText = generateTwoContinuousStats(var1, var2, var1Data, var2Data);
                     } else if (analysisType === 'correlation') {
                         chartConfig = createScatterPlotConfig(var1, var2, var1Data, var2Data);
-                        statsText = generateCorrelationStats(var1, var2, var1Data, var2Data);
+                        statsText = performCorrelationAnalysis(var1, var2, var1Data, var2Data);
                     }
                 }
             }
             
-            // Display the chart
             if (chartConfig) {
                 const ctx = chartContainer.getContext('2d');
                 currentChart = new Chart(ctx, chartConfig);
             }
             
-            // Display statistics
             statsOutput.textContent = statsText;
         }
         
-        // Chart creation functions
+        // Chart creation functions (implemented)
         function createBarChartConfig(variableName, data) {
-            // Count frequencies
             const counts = {};
             data.forEach(value => {
                 counts[value] = (counts[value] || 0) + 1;
@@ -902,32 +1068,16 @@ function updateAnalysisOptions() {
                             display: true,
                             text: `Bar Plot of ${variableName}`
                         }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Frequency'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: variableName
-                            }
-                        }
                     }
                 }
             };
         }
         
         function createHistogramConfig(variableName, data) {
-            // Create bins for histogram
             const min = Math.min(...data);
             const max = Math.max(...data);
             const range = max - min;
-            const binCount = Math.min(10, Math.ceil(Math.sqrt(data.length)));
+            const binCount = Math.min(15, Math.ceil(Math.sqrt(data.length)));
             const binWidth = range / binCount;
             
             const bins = Array(binCount).fill(0);
@@ -936,7 +1086,7 @@ function updateAnalysisOptions() {
             for (let i = 0; i < binCount; i++) {
                 const binStart = min + i * binWidth;
                 const binEnd = binStart + binWidth;
-                labels.push(`${binStart.toFixed(2)}-${binEnd.toFixed(2)}`);
+                labels.push(`${binStart.toFixed(2)}`);
                 
                 data.forEach(value => {
                     if (value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)) {
@@ -950,7 +1100,7 @@ function updateAnalysisOptions() {
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: `Frequency of ${variableName}`,
+                        label: `Frequency`,
                         data: bins,
                         backgroundColor: 'rgba(74, 111, 165, 0.7)',
                         borderColor: 'rgba(74, 111, 165, 1)',
@@ -967,13 +1117,6 @@ function updateAnalysisOptions() {
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Frequency'
-                            }
-                        },
                         x: {
                             title: {
                                 display: true,
@@ -986,7 +1129,6 @@ function updateAnalysisOptions() {
         }
         
         function createBoxPlotConfig(variableName, data) {
-            // Calculate quartiles for box plot
             const sorted = [...data].sort((a, b) => a - b);
             const q1 = sorted[Math.floor(sorted.length * 0.25)];
             const median = sorted[Math.floor(sorted.length * 0.5)];
@@ -1002,9 +1144,9 @@ function updateAnalysisOptions() {
                     datasets: [{
                         label: variableName,
                         data: [[min, q1, median, q3, max]],
-                        backgroundColor: 'rgba(74, 111, 165, 0.7)',
+                        backgroundColor: 'rgba(74, 111, 165, 0.5)',
                         borderColor: 'rgba(74, 111, 165, 1)',
-                        borderWidth: 1
+                        borderWidth: 2
                     }]
                 },
                 options: {
@@ -1021,7 +1163,6 @@ function updateAnalysisOptions() {
         }
         
         function createScatterPlotConfig(var1, var2, var1Data, var2Data) {
-            // Combine data for scatter plot
             const combinedData = [];
             const n = Math.min(var1Data.length, var2Data.length);
             
@@ -1037,8 +1178,7 @@ function updateAnalysisOptions() {
                         data: combinedData,
                         backgroundColor: 'rgba(74, 111, 165, 0.7)',
                         borderColor: 'rgba(74, 111, 165, 1)',
-                        pointRadius: 5,
-                        pointHoverRadius: 8
+                        pointRadius: 4
                     }]
                 },
                 options: {
@@ -1049,27 +1189,12 @@ function updateAnalysisOptions() {
                             display: true,
                             text: `Scatter Plot: ${var1} vs ${var2}`
                         }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: var1
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: var2
-                            }
-                        }
                     }
                 }
             };
         }
         
         function createGroupedBarChartConfig(var1, var2, var1Data, var2Data) {
-            // Create cross-tabulation
             const categories1 = [...new Set(var1Data)];
             const categories2 = [...new Set(var2Data)];
             
@@ -1087,13 +1212,11 @@ function updateAnalysisOptions() {
             }
             
             const datasets = categories2.map((cat2, index) => {
-                const hue = index * 60 % 360;
+                const hue = (index * 137) % 360;
                 return {
-                    label: `${var2}: ${cat2}`,
+                    label: `${cat2}`,
                     data: categories1.map(cat1 => counts[cat1][cat2]),
-                    backgroundColor: `hsla(${hue}, 70%, 60%, 0.7)`,
-                    borderColor: `hsl(${hue}, 70%, 50%)`,
-                    borderWidth: 1
+                    backgroundColor: `hsla(${hue}, 70%, 60%, 0.7)`
                 };
             });
             
@@ -1109,22 +1232,7 @@ function updateAnalysisOptions() {
                     plugins: {
                         title: {
                             display: true,
-                            text: `Grouped Bar Plot: ${var1} by ${var2}`
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Frequency'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: var1
-                            }
+                            text: `${var1} by ${var2}`
                         }
                     }
                 }
@@ -1132,7 +1240,6 @@ function updateAnalysisOptions() {
         }
         
         function createGroupedBoxPlotConfig(catVar, contVar, catData, contData) {
-            // Group continuous data by categories
             const categories = [...new Set(catData)];
             const groupedData = {};
             
@@ -1145,25 +1252,25 @@ function updateAnalysisOptions() {
                 groupedData[catData[i]].push(contData[i]);
             }
             
-            // Calculate box plot values for each category
             const datasets = [{
                 label: contVar,
                 data: categories.map(cat => {
-                    const values = groupedData[cat].sort((a, b) => a - b);
+                    const values = groupedData[cat];
                     if (values.length === 0) return [0, 0, 0, 0, 0];
                     
-                    const q1 = values[Math.floor(values.length * 0.25)];
-                    const median = values[Math.floor(values.length * 0.5)];
-                    const q3 = values[Math.floor(values.length * 0.75)];
+                    const sorted = values.sort((a, b) => a - b);
+                    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+                    const median = sorted[Math.floor(sorted.length * 0.5)];
+                    const q3 = sorted[Math.floor(sorted.length * 0.75)];
                     const iqr = q3 - q1;
-                    const min = Math.max(values[0], q1 - 1.5 * iqr);
-                    const max = Math.min(values[values.length - 1], q3 + 1.5 * iqr);
+                    const min = Math.max(sorted[0], q1 - 1.5 * iqr);
+                    const max = Math.min(sorted[sorted.length - 1], q3 + 1.5 * iqr);
                     
                     return [min, q1, median, q3, max];
                 }),
-                backgroundColor: 'rgba(74, 111, 165, 0.7)',
+                backgroundColor: 'rgba(74, 111, 165, 0.5)',
                 borderColor: 'rgba(74, 111, 165, 1)',
-                borderWidth: 1
+                borderWidth: 2
             }];
             
             return {
@@ -1178,43 +1285,29 @@ function updateAnalysisOptions() {
                     plugins: {
                         title: {
                             display: true,
-                            text: `Box Plot of ${contVar} by ${catVar}`
-                        }
-                    },
-                    scales: {
-                        y: {
-                            title: {
-                                display: true,
-                                text: contVar
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: catVar
-                            }
+                            text: `${contVar} by ${catVar}`
                         }
                     }
                 }
             };
         }
         
-        // Statistics generation functions
+        // Statistical analysis functions (fully implemented)
         function generateCategoricalStats(variableName, data) {
-            // Count frequencies
             const counts = {};
             data.forEach(value => {
                 counts[value] = (counts[value] || 0) + 1;
             });
             
-            let stats = `=== Categorical Variable: ${variableName} ===\n\n`;
+            let stats = `=== CATEGORICAL VARIABLE: ${variableName} ===\n\n`;
             stats += `Total observations: ${data.length}\n`;
             stats += `Number of categories: ${Object.keys(counts).length}\n\n`;
-            stats += "Category distribution:\n";
+            stats += "CATEGORY DISTRIBUTION:\n";
+            stats += "----------------------\n";
             
             Object.entries(counts).forEach(([category, count]) => {
-                const percentage = (count / data.length * 100).toFixed(1);
-                stats += `  ${category}: ${count} (${percentage}%)\n`;
+                const percentage = (count / data.length * 100).toFixed(2);
+                stats += `${category}: ${count} (${percentage}%)\n`;
             });
             
             return stats;
@@ -1222,42 +1315,78 @@ function updateAnalysisOptions() {
         
         function generateContinuousStats(variableName, data) {
             const n = data.length;
-            const mean = data.reduce((sum, val) => sum + val, 0) / n;
-            
-            // Sort for median
-            const sorted = [...data].sort((a, b) => a - b);
-            const median = sorted[Math.floor(n / 2)];
-            
-            // Standard deviation
-            const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (n - 1);
-            const stdDev = Math.sqrt(variance);
-            
-            // Min and max
+            const m = mean(data);
+            const med = median(data);
+            const sd = stdDev(data);
+            const q = quartiles(data);
             const min = Math.min(...data);
             const max = Math.max(...data);
             
-            let stats = `=== Continuous Variable: ${variableName} ===\n\n`;
-            stats += `Total observations: ${n}\n`;
-            stats += `Mean: ${mean.toFixed(4)}\n`;
-            stats += `Median: ${median.toFixed(4)}\n`;
-            stats += `Standard Deviation: ${stdDev.toFixed(4)}\n`;
+            let stats = `=== CONTINUOUS VARIABLE: ${variableName} ===\n\n`;
+            stats += `Sample size (n): ${n}\n`;
+            stats += `Mean: ${m.toFixed(4)}\n`;
+            stats += `Median: ${med.toFixed(4)}\n`;
+            stats += `Standard Deviation: ${sd.toFixed(4)}\n`;
             stats += `Minimum: ${min.toFixed(4)}\n`;
             stats += `Maximum: ${max.toFixed(4)}\n`;
             stats += `Range: ${(max - min).toFixed(4)}\n`;
+            stats += `Q1 (25th percentile): ${q.q1.toFixed(4)}\n`;
+            stats += `Q3 (75th percentile): ${q.q3.toFixed(4)}\n`;
+            stats += `Interquartile Range (IQR): ${(q.q3 - q.q1).toFixed(4)}\n`;
             
             return stats;
         }
         
-        function generateProportionTestStats(variableName, data) {
-            const stats = generateCategoricalStats(variableName, data);
-            return stats + "\n\n=== Test of Proportion (Chi-square Goodness-of-Fit) ===\n\n" +
-                "Null Hypothesis: All categories have equal proportions.\n" +
-                "Alternative Hypothesis: At least one category has a different proportion.\n\n" +
-                "Note: A proper chi-square test would be calculated here with the actual data.\n" +
-                "Expected frequencies would be compared to observed frequencies.";
+        function performProportionTest(variableName, data, expectedProportions) {
+            const counts = {};
+            data.forEach(value => {
+                counts[value] = (counts[value] || 0) + 1;
+            });
+            
+            const categories = Object.keys(counts);
+            const observed = Object.values(counts);
+            const total = data.length;
+            
+            let stats = `=== CHI-SQUARE GOODNESS-OF-FIT TEST ===\n\n`;
+            stats += `Variable: ${variableName}\n`;
+            stats += `Total observations: ${total}\n\n`;
+            
+            // If no expected proportions provided, assume equal distribution
+            let expected = expectedProportions;
+            if (!expected || expected.length !== categories.length || expected.some(isNaN)) {
+                expected = Array(categories.length).fill(total / categories.length);
+                stats += "Using equal expected frequencies (null hypothesis: equal proportions)\n\n";
+            } else {
+                expected = expected.map(p => p * total);
+                stats += "Using provided expected proportions\n\n";
+            }
+            
+            stats += "OBSERVED vs EXPECTED FREQUENCIES:\n";
+            stats += "---------------------------------\n";
+            categories.forEach((cat, i) => {
+                stats += `${cat}: Observed = ${observed[i]}, Expected = ${expected[i].toFixed(2)}\n`;
+            });
+            
+            const result = chiSquareGoodnessOfFit(observed, expected);
+            
+            stats += `\nTEST RESULTS:\n`;
+            stats += `-------------\n`;
+            stats += `Chi-square statistic: ${result.chi2.toFixed(4)}\n`;
+            stats += `Degrees of freedom: ${result.df}\n`;
+            stats += `P-value: ${result.pValue.toFixed(6)}\n\n`;
+            
+            if (result.pValue < 0.05) {
+                stats += `CONCLUSION: Reject null hypothesis at α=0.05.\n`;
+                stats += `The observed proportions differ significantly from expected proportions.\n`;
+            } else {
+                stats += `CONCLUSION: Fail to reject null hypothesis at α=0.05.\n`;
+                stats += `No significant difference between observed and expected proportions.\n`;
+            }
+            
+            return stats;
         }
         
-        function generateProportionCIStats(variableName, data) {
+        function performProportionCI(variableName, data, confidenceLevel) {
             const counts = {};
             data.forEach(value => {
                 counts[value] = (counts[value] || 0) + 1;
@@ -1266,77 +1395,75 @@ function updateAnalysisOptions() {
             const categories = Object.keys(counts);
             const total = data.length;
             
-            let stats = `=== Confidence Intervals for Proportions: ${variableName} ===\n\n`;
-            stats += `Total observations: ${total}\n\n`;
+            let stats = `=== CONFIDENCE INTERVALS FOR PROPORTIONS ===\n\n`;
+            stats += `Variable: ${variableName}\n`;
+            stats += `Total observations: ${total}\n`;
+            stats += `Confidence level: ${(confidenceLevel * 100).toFixed(1)}%\n\n`;
             
             categories.forEach(category => {
                 const count = counts[category];
-                const proportion = count / total;
-                
-                // Wald confidence interval
-                const z = 1.96; // For 95% CI
-                const margin = z * Math.sqrt(proportion * (1 - proportion) / total);
-                const lower = Math.max(0, proportion - margin);
-                const upper = Math.min(1, proportion + margin);
+                const ci = confidenceIntervalProportion(count, total, confidenceLevel);
                 
                 stats += `Category: ${category}\n`;
-                stats += `  Proportion: ${(proportion * 100).toFixed(2)}%\n`;
-                stats += `  95% CI: [${(lower * 100).toFixed(2)}%, ${(upper * 100).toFixed(2)}%]\n\n`;
+                stats += `  Count: ${count}\n`;
+                stats += `  Sample proportion: ${(ci.proportion * 100).toFixed(2)}%\n`;
+                stats += `  ${(confidenceLevel * 100).toFixed(1)}% CI: [${(ci.lower * 100).toFixed(2)}%, ${(ci.upper * 100).toFixed(2)}%]\n`;
+                stats += `  Margin of error: ±${(ci.margin * 100).toFixed(2)}%\n\n`;
             });
             
             return stats;
         }
         
-        function generateMeanCIStats(variableName, data) {
+        function performMeanCI(variableName, data, confidenceLevel) {
             const n = data.length;
-            const mean = data.reduce((sum, val) => sum + val, 0) / n;
+            const ci = confidenceIntervalMean(data, confidenceLevel);
             
-            // Standard deviation
-            const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (n - 1);
-            const stdDev = Math.sqrt(variance);
-            
-            // Standard error
-            const stdError = stdDev / Math.sqrt(n);
-            
-            // 95% confidence interval
-            const t = 1.96; // Approximation for large n
-            const margin = t * stdError;
-            const lower = mean - margin;
-            const upper = mean + margin;
-            
-            let stats = `=== Confidence Interval for Mean: ${variableName} ===\n\n`;
-            stats += `Sample size: ${n}\n`;
-            stats += `Sample mean: ${mean.toFixed(4)}\n`;
-            stats += `Sample standard deviation: ${stdDev.toFixed(4)}\n`;
-            stats += `Standard error: ${stdError.toFixed(4)}\n\n`;
-            stats += `95% Confidence Interval for the population mean:\n`;
-            stats += `  [${lower.toFixed(4)}, ${upper.toFixed(4)}]\n`;
+            let stats = `=== CONFIDENCE INTERVAL FOR MEAN ===\n\n`;
+            stats += `Variable: ${variableName}\n`;
+            stats += `Sample size (n): ${n}\n`;
+            stats += `Sample mean: ${ci.mean.toFixed(4)}\n`;
+            stats += `Sample standard deviation: ${stdDev(data).toFixed(4)}\n`;
+            stats += `Standard error: ${(stdDev(data) / Math.sqrt(n)).toFixed(4)}\n`;
+            stats += `Confidence level: ${(confidenceLevel * 100).toFixed(1)}%\n\n`;
+            stats += `CONFIDENCE INTERVAL:\n`;
+            stats += `-------------------\n`;
+            stats += `${(confidenceLevel * 100).toFixed(1)}% CI for population mean: [${ci.lower.toFixed(4)}, ${ci.upper.toFixed(4)}]\n`;
+            stats += `Margin of error: ±${ci.margin.toFixed(4)}\n`;
             
             return stats;
         }
         
-        function generateTTestStats(variableName, data) {
-            const n = data.length;
-            const mean = data.reduce((sum, val) => sum + val, 0) / n;
+        function performOneSampleTTest(variableName, data, mu0) {
+            const result = tTestOneSample(data, mu0);
             
-            // Standard deviation
-            const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (n - 1);
-            const stdDev = Math.sqrt(variance);
+            let stats = `=== ONE-SAMPLE T-TEST ===\n\n`;
+            stats += `Variable: ${variableName}\n`;
+            stats += `Sample size (n): ${data.length}\n`;
+            stats += `Sample mean: ${result.sampleMean.toFixed(4)}\n`;
+            stats += `Hypothesized mean (μ₀): ${mu0.toFixed(4)}\n`;
+            stats += `Standard error: ${result.stdError.toFixed(4)}\n\n`;
+            stats += `HYPOTHESES:\n`;
+            stats += `-----------\n`;
+            stats += `H₀: μ = ${mu0.toFixed(4)} (population mean equals ${mu0.toFixed(4)})\n`;
+            stats += `H₁: μ ≠ ${mu0.toFixed(4)} (population mean differs from ${mu0.toFixed(4)})\n\n`;
+            stats += `TEST RESULTS:\n`;
+            stats += `-------------\n`;
+            stats += `t-statistic: ${result.t.toFixed(4)}\n`;
+            stats += `Degrees of freedom: ${result.df}\n`;
+            stats += `Two-tailed p-value: ${result.pValue.toFixed(6)}\n\n`;
             
-            let stats = `=== One-sample T-test: ${variableName} ===\n\n`;
-            stats += `Sample size: ${n}\n`;
-            stats += `Sample mean: ${mean.toFixed(4)}\n`;
-            stats += `Sample standard deviation: ${stdDev.toFixed(4)}\n\n`;
-            stats += "Null Hypothesis: Population mean = 0\n";
-            stats += "Alternative Hypothesis: Population mean ≠ 0\n\n";
-            stats += "Note: The actual t-statistic and p-value would be calculated here.\n";
-            stats += "Degrees of freedom: " + (n - 1) + "\n";
+            if (result.pValue < 0.05) {
+                stats += `CONCLUSION: Reject H₀ at α=0.05.\n`;
+                stats += `The sample mean (${result.sampleMean.toFixed(4)}) is significantly different from ${mu0.toFixed(4)}.\n`;
+            } else {
+                stats += `CONCLUSION: Fail to reject H₀ at α=0.05.\n`;
+                stats += `No significant difference between sample mean (${result.sampleMean.toFixed(4)}) and ${mu0.toFixed(4)}.\n`;
+            }
             
             return stats;
         }
         
         function generateTwoCategoricalStats(var1, var2, var1Data, var2Data) {
-            // Create cross-tabulation
             const categories1 = [...new Set(var1Data)];
             const categories2 = [...new Set(var2Data)];
             
@@ -1350,7 +1477,7 @@ function updateAnalysisOptions() {
                 rowTotals[cat1] = 0;
                 categories2.forEach(cat2 => {
                     counts[cat1][cat2] = 0;
-                    colTotals[cat2] = (colTotals[cat2] || 0);
+                    colTotals[cat2] = 0;
                 });
             });
             
@@ -1362,50 +1489,83 @@ function updateAnalysisOptions() {
                 total++;
             }
             
-            let stats = `=== Two Categorical Variables: ${var1} and ${var2} ===\n\n`;
+            let stats = `=== TWO CATEGORICAL VARIABLES ===\n\n`;
+            stats += `Variables: ${var1} and ${var2}\n`;
             stats += `Total observations: ${total}\n\n`;
-            stats += "Contingency Table:\n\n";
+            stats += "CONTINGENCY TABLE:\n";
+            stats += "------------------\n\n";
             
-            // Header row
-            stats += "           ";
+            // Header
+            stats += "".padEnd(12);
             categories2.forEach(cat2 => {
-                stats += `${cat2}      `.substring(0, 8);
+                stats += cat2.toString().padEnd(10);
             });
             stats += "Total\n";
             
-            // Data rows
+            // Rows
             categories1.forEach(cat1 => {
-                stats += `${cat1}      `.substring(0, 10);
+                stats += cat1.toString().padEnd(12);
                 categories2.forEach(cat2 => {
-                    stats += `${counts[cat1][cat2]}      `.substring(0, 8);
+                    stats += counts[cat1][cat2].toString().padEnd(10);
                 });
-                stats += `${rowTotals[cat1]}\n`;
+                stats += rowTotals[cat1] + "\n";
             });
             
             // Column totals
-            stats += "Total     ";
+            stats += "Total".padEnd(12);
             categories2.forEach(cat2 => {
-                stats += `${colTotals[cat2]}      `.substring(0, 8);
+                stats += colTotals[cat2].toString().padEnd(10);
             });
-            stats += `${total}\n`;
+            stats += total + "\n";
             
             return stats;
         }
         
-        function generateChiSquareStats(var1, var2, var1Data, var2Data) {
-            const stats = generateTwoCategoricalStats(var1, var2, var1Data, var2Data);
-            return stats + "\n\n=== Chi-square Test of Independence ===\n\n" +
-                "Null Hypothesis: The two variables are independent.\n" +
-                "Alternative Hypothesis: The two variables are associated.\n\n" +
-                "Note: The chi-square statistic and p-value would be calculated here.\n" +
-                "Expected frequencies would be computed from row and column totals.";
+        function performChiSquareTest(var1, var2, var1Data, var2Data) {
+            const categories1 = [...new Set(var1Data)];
+            const categories2 = [...new Set(var2Data)];
+            
+            const contingencyTable = categories1.map(cat1 => {
+                return categories2.map(cat2 => {
+                    let count = 0;
+                    const n = Math.min(var1Data.length, var2Data.length);
+                    for (let i = 0; i < n; i++) {
+                        if (var1Data[i] === cat1 && var2Data[i] === cat2) {
+                            count++;
+                        }
+                    }
+                    return count;
+                });
+            });
+            
+            const result = chiSquareIndependence(contingencyTable);
+            
+            let stats = generateTwoCategoricalStats(var1, var2, var1Data, var2Data);
+            stats += `\n=== CHI-SQUARE TEST OF INDEPENDENCE ===\n\n`;
+            stats += `HYPOTHESES:\n`;
+            stats += `-----------\n`;
+            stats += `H₀: ${var1} and ${var2} are independent\n`;
+            stats += `H₁: ${var1} and ${var2} are associated\n\n`;
+            stats += `TEST RESULTS:\n`;
+            stats += `-------------\n`;
+            stats += `Chi-square statistic: ${result.chi2.toFixed(4)}\n`;
+            stats += `Degrees of freedom: ${result.df}\n`;
+            stats += `P-value: ${result.pValue.toFixed(6)}\n\n`;
+            
+            if (result.pValue < 0.05) {
+                stats += `CONCLUSION: Reject H₀ at α=0.05.\n`;
+                stats += `There is a significant association between ${var1} and ${var2}.\n`;
+            } else {
+                stats += `CONCLUSION: Fail to reject H₀ at α=0.05.\n`;
+                stats += `No significant association between ${var1} and ${var2}.\n`;
+            }
+            
+            return stats;
         }
         
         function generateCategoricalContinuousStats(catVar, contVar, catData, contData) {
-            // Group continuous data by categories
             const categories = [...new Set(catData)];
             const groupedData = {};
-            const groupStats = {};
             
             categories.forEach(cat => {
                 groupedData[cat] = [];
@@ -1416,120 +1576,155 @@ function updateAnalysisOptions() {
                 groupedData[catData[i]].push(contData[i]);
             }
             
-            // Calculate statistics for each group
+            let stats = `=== ${contVar} BY ${catVar} ===\n\n`;
+            
             categories.forEach(cat => {
                 const data = groupedData[cat];
-                if (data.length === 0) {
-                    groupStats[cat] = { n: 0, mean: NaN, stdDev: NaN };
-                    return;
-                }
+                if (data.length === 0) return;
                 
-                const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
-                const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (data.length - 1);
-                const stdDev = Math.sqrt(variance);
-                
-                groupStats[cat] = {
-                    n: data.length,
-                    mean: mean,
-                    stdDev: stdDev
-                };
-            });
-            
-            let stats = `=== ${contVar} by ${catVar} ===\n\n`;
-            
-            categories.forEach(cat => {
-                const statsForCat = groupStats[cat];
                 stats += `Group: ${cat}\n`;
-                stats += `  Sample size: ${statsForCat.n}\n`;
-                if (statsForCat.n > 0) {
-                    stats += `  Mean: ${statsForCat.mean.toFixed(4)}\n`;
-                    stats += `  Standard deviation: ${statsForCat.stdDev.toFixed(4)}\n`;
-                }
-                stats += "\n";
+                stats += `  Sample size: ${data.length}\n`;
+                stats += `  Mean: ${mean(data).toFixed(4)}\n`;
+                stats += `  Standard deviation: ${stdDev(data).toFixed(4)}\n`;
+                stats += `  Median: ${median(data).toFixed(4)}\n`;
+                stats += `  Minimum: ${Math.min(...data).toFixed(4)}\n`;
+                stats += `  Maximum: ${Math.max(...data).toFixed(4)}\n\n`;
             });
             
             return stats;
         }
         
-        function generateTwoSampleTTestStats(catVar, contVar, catData, contData) {
-            const stats = generateCategoricalContinuousStats(catVar, contVar, catData, contData);
-            return stats + "\n=== Two-sample T-test ===\n\n" +
-                "Null Hypothesis: The means of the two groups are equal.\n" +
-                "Alternative Hypothesis: The means of the two groups are different.\n\n" +
-                "Note: The t-statistic, degrees of freedom, and p-value would be calculated here.\n" +
-                "Both equal and unequal variance assumptions would be tested.";
+        function performTwoSampleTTest(catVar, contVar, catData, contData) {
+            const categories = [...new Set(catData)];
+            
+            if (categories.length !== 2) {
+                return `Two-sample t-test requires exactly 2 groups. Found ${categories.length} groups.`;
+            }
+            
+            const group1Data = [];
+            const group2Data = [];
+            
+            const n = Math.min(catData.length, contData.length);
+            for (let i = 0; i < n; i++) {
+                if (catData[i] === categories[0]) {
+                    group1Data.push(contData[i]);
+                } else if (catData[i] === categories[1]) {
+                    group2Data.push(contData[i]);
+                }
+            }
+            
+            const resultEqual = tTestTwoSample(group1Data, group2Data, true);
+            const resultUnequal = tTestTwoSample(group1Data, group2Data, false);
+            
+            let stats = `=== TWO-SAMPLE T-TEST ===\n\n`;
+            stats += `Groups: ${categories[0]} vs ${categories[1]}\n`;
+            stats += `Variable: ${contVar}\n\n`;
+            stats += `GROUP STATISTICS:\n`;
+            stats += `----------------\n`;
+            stats += `${categories[0]} (n=${group1Data.length}): Mean = ${resultEqual.mean1.toFixed(4)}, SD = ${Math.sqrt(resultEqual.var1).toFixed(4)}\n`;
+            stats += `${categories[1]} (n=${group2Data.length}): Mean = ${resultEqual.mean2.toFixed(4)}, SD = ${Math.sqrt(resultEqual.var2).toFixed(4)}\n\n`;
+            stats += `HYPOTHESES:\n`;
+            stats += `-----------\n`;
+            stats += `H₀: μ₁ = μ₂ (population means are equal)\n`;
+            stats += `H₁: μ₁ ≠ μ₂ (population means are not equal)\n\n`;
+            stats += `TEST RESULTS (Equal variances assumed):\n`;
+            stats += `---------------------------------------\n`;
+            stats += `t-statistic: ${resultEqual.t.toFixed(4)}\n`;
+            stats += `Degrees of freedom: ${resultEqual.df}\n`;
+            stats += `Two-tailed p-value: ${resultEqual.pValue.toFixed(6)}\n\n`;
+            stats += `TEST RESULTS (Equal variances not assumed):\n`;
+            stats += `------------------------------------------\n`;
+            stats += `t-statistic: ${resultUnequal.t.toFixed(4)}\n`;
+            stats += `Degrees of freedom: ${resultUnequal.df.toFixed(2)}\n`;
+            stats += `Two-tailed p-value: ${resultUnequal.pValue.toFixed(6)}\n\n`;
+            
+            if (resultEqual.pValue < 0.05) {
+                stats += `CONCLUSION: Reject H₀ at α=0.05.\n`;
+                stats += `Significant difference between group means.\n`;
+            } else {
+                stats += `CONCLUSION: Fail to reject H₀ at α=0.05.\n`;
+                stats += `No significant difference between group means.\n`;
+            }
+            
+            return stats;
         }
         
         function generateTwoContinuousStats(var1, var2, var1Data, var2Data) {
             const n = Math.min(var1Data.length, var2Data.length);
+            const mean1 = mean(var1Data.slice(0, n));
+            const mean2 = mean(var2Data.slice(0, n));
+            const sd1 = stdDev(var1Data.slice(0, n));
+            const sd2 = stdDev(var2Data.slice(0, n));
             
-            // Basic statistics for each variable
-            const mean1 = var1Data.slice(0, n).reduce((sum, val) => sum + val, 0) / n;
-            const mean2 = var2Data.slice(0, n).reduce((sum, val) => sum + val, 0) / n;
-            
-            let stats = `=== Two Continuous Variables: ${var1} and ${var2} ===\n\n`;
+            let stats = `=== TWO CONTINUOUS VARIABLES ===\n\n`;
+            stats += `Variables: ${var1} and ${var2}\n`;
             stats += `Paired observations: ${n}\n\n`;
-            stats += `${var1}:\n`;
-            stats += `  Mean: ${mean1.toFixed(4)}\n\n`;
-            stats += `${var2}:\n`;
-            stats += `  Mean: ${mean2.toFixed(4)}\n`;
+            stats += `DESCRIPTIVE STATISTICS:\n`;
+            stats += `----------------------\n`;
+            stats += `${var1}: Mean = ${mean1.toFixed(4)}, SD = ${sd1.toFixed(4)}\n`;
+            stats += `${var2}: Mean = ${mean2.toFixed(4)}, SD = ${sd2.toFixed(4)}\n`;
             
             return stats;
         }
         
-        function generateCorrelationStats(var1, var2, var1Data, var2Data) {
+        function performCorrelationAnalysis(var1, var2, var1Data, var2Data) {
             const n = Math.min(var1Data.length, var2Data.length);
+            const corr = correlation(var1Data.slice(0, n), var2Data.slice(0, n));
             
-            if (n < 2) {
-                return "Insufficient data for correlation analysis.";
+            let stats = generateTwoContinuousStats(var1, var2, var1Data, var2Data);
+            stats += `\n=== CORRELATION ANALYSIS ===\n\n`;
+            stats += `Pearson correlation coefficient (r): ${corr.toFixed(4)}\n\n`;
+            
+            // Significance test for correlation
+            if (n > 2) {
+                const t = corr * Math.sqrt((n - 2) / (1 - corr * corr));
+                const df = n - 2;
+                const pValue = 2 * (1 - jStat.studentt.cdf(Math.abs(t), df));
+                
+                stats += `CORRELATION SIGNIFICANCE TEST:\n`;
+                stats += `-----------------------------\n`;
+                stats += `H₀: ρ = 0 (no correlation)\n`;
+                stats += `H₁: ρ ≠ 0 (correlation exists)\n\n`;
+                stats += `t-statistic: ${t.toFixed(4)}\n`;
+                stats += `Degrees of freedom: ${df}\n`;
+                stats += `Two-tailed p-value: ${pValue.toFixed(6)}\n\n`;
+                
+                if (pValue < 0.05) {
+                    stats += `CONCLUSION: Reject H₀ at α=0.05.\n`;
+                    stats += `Significant correlation exists (r = ${corr.toFixed(4)}).\n`;
+                } else {
+                    stats += `CONCLUSION: Fail to reject H₀ at α=0.05.\n`;
+                    stats += `No significant correlation detected.\n`;
+                }
             }
             
-            // Calculate correlation
-            const mean1 = var1Data.slice(0, n).reduce((sum, val) => sum + val, 0) / n;
-            const mean2 = var2Data.slice(0, n).reduce((sum, val) => sum + val, 0) / n;
-            
-            let numerator = 0;
-            let denom1 = 0;
-            let denom2 = 0;
-            
-            for (let i = 0; i < n; i++) {
-                const diff1 = var1Data[i] - mean1;
-                const diff2 = var2Data[i] - mean2;
-                numerator += diff1 * diff2;
-                denom1 += diff1 * diff1;
-                denom2 += diff2 * diff2;
-            }
-            
-            const correlation = numerator / Math.sqrt(denom1 * denom2);
-            
-            let stats = `=== Correlation Analysis: ${var1} and ${var2} ===\n\n`;
-            stats += `Sample size: ${n}\n`;
-            stats += `Pearson correlation coefficient (r): ${correlation.toFixed(4)}\n\n`;
-            
-            // Interpret correlation
-            let interpretation = "";
-            const absCorr = Math.abs(correlation);
-            if (absCorr >= 0.9) interpretation = "Very strong";
-            else if (absCorr >= 0.7) interpretation = "Strong";
-            else if (absCorr >= 0.5) interpretation = "Moderate";
-            else if (absCorr >= 0.3) interpretation = "Weak";
-            else interpretation = "Very weak or no";
-            
-            stats += `Interpretation: ${interpretation} correlation\n`;
-            
-            if (correlation > 0) {
-                stats += "Direction: Positive (as one increases, the other tends to increase)\n";
-            } else if (correlation < 0) {
-                stats += "Direction: Negative (as one increases, the other tends to decrease)\n";
+            // Interpretation
+            stats += `\nCORRELATION INTERPRETATION:\n`;
+            stats += `--------------------------\n`;
+            const absCorr = Math.abs(corr);
+            if (absCorr >= 0.9) {
+                stats += `Very strong correlation\n`;
+            } else if (absCorr >= 0.7) {
+                stats += `Strong correlation\n`;
+            } else if (absCorr >= 0.5) {
+                stats += `Moderate correlation\n`;
+            } else if (absCorr >= 0.3) {
+                stats += `Weak correlation\n`;
             } else {
-                stats += "Direction: No linear relationship\n";
+                stats += `Very weak or no correlation\n`;
+            }
+            
+            if (corr > 0) {
+                stats += `Positive relationship: As ${var1} increases, ${var2} tends to increase\n`;
+            } else if (corr < 0) {
+                stats += `Negative relationship: As ${var1} increases, ${var2} tends to decrease\n`;
             }
             
             return stats;
         }
         
+        // Help popup functions
         function updateHelpPopup(var1Type, var2Type) {
-            // Determine which help page to show based on variable types
             let targetPage = 1;
             
             if (!var2Type) {
@@ -1542,7 +1737,6 @@ function updateAnalysisOptions() {
                 targetPage = 3;
             }
             
-            // Navigate to the appropriate page
             currentHelpPage = targetPage;
             showHelpPage(currentHelpPage);
         }
@@ -1550,27 +1744,22 @@ function updateAnalysisOptions() {
         function changeHelpPage(delta) {
             const newPage = currentHelpPage + delta;
             
-            if (newPage >= 1 && newPage <= 4) {
+            if (newPage >= 1 && newPage <= 3) {
                 currentHelpPage = newPage;
                 showHelpPage(currentHelpPage);
             }
         }
         
         function showHelpPage(pageNum) {
-            // Hide all pages
             document.querySelectorAll('.help-page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            // Show the selected page
             document.getElementById(`page${pageNum}`).classList.add('active');
-            
-            // Update page indicator
             currentPageSpan.textContent = pageNum;
             
-            // Update button states
             prevPageBtn.disabled = pageNum === 1;
-            nextPageBtn.disabled = pageNum === 4;
+            nextPageBtn.disabled = pageNum === 3;
         }
         
         function toggleHelpPopup() {
@@ -1578,101 +1767,90 @@ function updateAnalysisOptions() {
             if (helpPopup.classList.contains('active')) {
                 toggleHelp.textContent = '×';
                 toggleHelp.style.backgroundColor = '#e74c3c';
-    } else {
-      toggleHelp.textContent = '?';
-      toggleHelp.style.backgroundColor = '#4a6fa5';
-    }
-  }
-  
-  function resetApp() {
-    // Reset all inputs
-    fileInput.value = '';
-    csvData = [];
-    headers = [];
-    columnTypes = {};
-    
-    // Reset UI
-    var1Select.innerHTML = '<option value="">Select a variable</option>';
-    var2Select.innerHTML = '<option value="">Select a variable (optional)</option>';
-    var1Select.disabled = true;
-    var2Select.disabled = true;
-    
-    analysisTypeGroup.innerHTML = '';
-    analyzeBtn.disabled = true;
-    
-    // Hide preview
-    dataPreview.style.display = 'none';
-    
-    // Clear results
-    resultsContainer.innerHTML = '<p style="text-align: center; padding: 40px; color: #777;">Run an analysis to see results here. The chart and statistics will appear in this section.</p>';
-    
-    // Destroy any existing chart
-    if (currentChart) {
-      currentChart.destroy();
-      currentChart = null;
-    }
-    
-    // Clear errors
-    clearUploadError();
-    
-    // Load sample data again
-    loadSampleData();
-  }
-  
-  function loadSampleData() {
-    // Create sample data
-    const sampleCSV = `Category,Score,Group,Age
-    A,85,Control,25
-    B,92,Treatment,32
-    A,78,Control,28
-    C,88,Treatment,45
-    B,95,Control,36
-    C,82,Treatment,29
-    A,90,Control,41
-    B,87,Treatment,33
-    C,91,Control,37
-    A,84,Treatment,26`;
-    
-    // Parse the sample CSV
-    Papa.parse(sampleCSV, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete: function(results) {
-        csvData = results.data;
-        headers = results.meta.fields;
+            } else {
+                toggleHelp.textContent = '?';
+                toggleHelp.style.backgroundColor = '#4a6fa5';
+            }
+        }
         
-        // Determine column types
-        determineColumnTypes();
+        function resetApp() {
+            fileInput.value = '';
+            csvData = [];
+            headers = [];
+            columnTypes = {};
+            
+            var1Select.innerHTML = '<option value="">Select a variable</option>';
+            var2Select.innerHTML = '<option value="">Select a variable (optional)</option>';
+            var1Select.disabled = true;
+            var2Select.disabled = true;
+            
+            analysisTypeGroup.innerHTML = '';
+            analyzeBtn.disabled = true;
+            testParams.classList.remove('active');
+            
+            dataPreview.style.display = 'none';
+            
+            resultsContainer.innerHTML = '<p style="text-align: center; padding: 40px; color: #777;">Run an analysis to see results here. The chart and statistics will appear in this section.</p>';
+            
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+            
+            clearUploadError();
+            loadSampleData();
+        }
         
-        // Update UI
-        updateDataPreview();
-        updateVariableSelects();
-        dataPreview.style.display = 'block';
-        analyzeBtn.disabled = false;
+        function loadSampleData() {
+            const sampleCSV = `Category,Score,Group,Age,Gender
+A,85,Control,25,Male
+B,92,Treatment,32,Female
+A,78,Control,28,Male
+C,88,Treatment,45,Female
+B,95,Control,36,Male
+C,82,Treatment,29,Female
+A,90,Control,41,Male
+B,87,Treatment,33,Male
+C,91,Control,37,Female
+A,84,Treatment,26,Female`;
+            
+            Papa.parse(sampleCSV, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    csvData = results.data;
+                    headers = results.meta.fields;
+                    
+                    determineColumnTypes();
+                    updateDataPreview();
+                    updateVariableSelects();
+                    dataPreview.style.display = 'block';
+                    analyzeBtn.disabled = true;
+                    
+                    dataInfo.textContent = `Loaded sample data: ${csvData.length} rows with ${headers.length} variables.`;
+                    
+                    // Pre-select variables for demonstration
+                    setTimeout(() => {
+                        var1Select.value = 'Score';
+                        var2Select.value = 'Group';
+                        var1Select.dispatchEvent(new Event('change'));
+                        var2Select.dispatchEvent(new Event('change'));
+                        analyzeBtn.disabled = false;
+                    }, 500);
+                }
+            });
+        }
         
-        // Show success message
-        dataInfo.textContent = `Loaded sample data: ${csvData.length} rows with ${headers.length} variables.`;
+        function showUploadError(message) {
+            uploadError.textContent = message;
+            uploadError.classList.add('active');
+        }
         
-        // Auto-select some variables for demonstration
-        setTimeout(() => {
-          var1Select.value = 'Category';
-          var2Select.value = 'Score';
-          updateAnalysisOptions();
-        }, 100);
-      }
-    });
-  }
-  
-  function showUploadError(message) {
-    uploadError.textContent = message;
-    uploadError.classList.add('active');
-  }
-  
-  function clearUploadError() {
-    uploadError.textContent = '';
-    uploadError.classList.remove('active');
-  }
-  </script>
-    </body>
-    </html>
+        function clearUploadError() {
+            uploadError.textContent = '';
+            uploadError.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
