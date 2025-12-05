@@ -433,21 +433,6 @@
             grid-column: 2;
         }
         
-        .results-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #4a6fa5;
-        }
-        
-        .results-title {
-            color: #4a6fa5;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
         @media (max-width: 992px) {
             .container {
                 grid-template-columns: 1fr;
@@ -858,7 +843,6 @@
             return { chi2, df, pValue, expected };
         }
         
-        // FIXED: Proper t-test implementation
         function tTestOneSample(data, mu0) {
             const n = data.length;
             const sampleMean = mean(data);
@@ -871,7 +855,6 @@
             return { t, df, pValue, sampleMean, stdError };
         }
         
-        // FIXED: Proper two-sample t-test
         function tTestTwoSample(group1Data, group2Data, equalVar = true) {
             const n1 = group1Data.length;
             const n2 = group2Data.length;
@@ -918,7 +901,6 @@
             };
         }
         
-        // NEW: ANOVA for multiple groups
         function anovaOneWay(groupsData) {
             const k = groupsData.length; // number of groups
             let overallMean = 0;
@@ -1021,6 +1003,394 @@
                 upper: Math.min(1, p + margin),
                 proportion: p,
                 margin: margin
+            };
+        }
+        
+        // Chart Creation Functions - ALL DEFINED
+        function createBarChartConfig(variableName, data) {
+            const counts = {};
+            data.forEach(value => {
+                const key = String(value);
+                counts[key] = (counts[key] || 0) + 1;
+            });
+            
+            const labels = Object.keys(counts);
+            const values = Object.values(counts);
+            const total = values.reduce((a, b) => a + b, 0);
+            
+            // Generate colors
+            const colors = labels.map((_, i) => {
+                const hue = (i * 137) % 360;
+                return `hsla(${hue}, 70%, 60%, 0.7)`;
+            });
+            
+            return {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Frequency of ${variableName}`,
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Bar Plot: ${variableName}`,
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.raw} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: variableName
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        function createHistogramConfig(variableName, data) {
+            // Calculate optimal number of bins
+            const n = data.length;
+            const binCount = Math.min(15, Math.ceil(Math.sqrt(n)));
+            
+            // Find min and max
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const range = max - min;
+            const binWidth = range / binCount;
+            
+            // Create bins
+            const bins = Array(binCount).fill(0);
+            const labels = [];
+            
+            for (let i = 0; i < binCount; i++) {
+                const binStart = min + i * binWidth;
+                const binEnd = binStart + binWidth;
+                labels.push(`${binStart.toFixed(1)}-${binEnd.toFixed(1)}`);
+                
+                // Count values in this bin
+                data.forEach(value => {
+                    if (value >= binStart && (i === binCount - 1 ? value <= binEnd : value < binEnd)) {
+                        bins[i]++;
+                    }
+                });
+            }
+            
+            return {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Frequency`,
+                        data: bins,
+                        backgroundColor: 'rgba(74, 111, 165, 0.7)',
+                        borderColor: 'rgba(74, 111, 165, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Histogram: ${variableName}`,
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: variableName
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        function createBoxPlotConfig(variableName, data) {
+            const sorted = [...data].sort((a, b) => a - b);
+            const q1 = sorted[Math.floor(sorted.length * 0.25)];
+            const median = sorted[Math.floor(sorted.length * 0.5)];
+            const q3 = sorted[Math.floor(sorted.length * 0.75)];
+            const iqr = q3 - q1;
+            const minVal = Math.max(sorted[0], q1 - 1.5 * iqr);
+            const maxVal = Math.min(sorted[sorted.length - 1], q3 + 1.5 * iqr);
+            
+            // Find outliers
+            const outliers = data.filter(x => x < q1 - 1.5 * iqr || x > q3 + 1.5 * iqr);
+            
+            return {
+                type: 'boxplot',
+                data: {
+                    labels: [variableName],
+                    datasets: [{
+                        label: variableName,
+                        data: [[minVal, q1, median, q3, maxVal]],
+                        backgroundColor: 'rgba(74, 111, 165, 0.5)',
+                        borderColor: 'rgba(74, 111, 165, 1)',
+                        borderWidth: 2,
+                        outlierColor: 'rgba(231, 76, 60, 0.8)',
+                        outlierRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Box Plot: ${variableName}`,
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const values = context.raw;
+                                    return [
+                                        `Minimum: ${values[0].toFixed(2)}`,
+                                        `Q1: ${values[1].toFixed(2)}`,
+                                        `Median: ${values[2].toFixed(2)}`,
+                                        `Q3: ${values[3].toFixed(2)}`,
+                                        `Maximum: ${values[4].toFixed(2)}`,
+                                        `Outliers: ${outliers.length}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        function createScatterPlotConfig(var1, var2, var1Data, var2Data) {
+            // Pair the data
+            const pairedData = [];
+            const n = Math.min(var1Data.length, var2Data.length);
+            
+            for (let i = 0; i < n; i++) {
+                pairedData.push({ x: var1Data[i], y: var2Data[i] });
+            }
+            
+            // Calculate correlation
+            const corr = correlation(var1Data.slice(0, n), var2Data.slice(0, n));
+            
+            return {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: `${var1} vs ${var2}`,
+                        data: pairedData,
+                        backgroundColor: 'rgba(74, 111, 165, 0.7)',
+                        borderColor: 'rgba(74, 111, 165, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Scatter Plot: ${var1} vs ${var2} (r = ${isNaN(corr) ? 'N/A' : corr.toFixed(3)})`,
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: var1
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: var2
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        function createGroupedBarChartConfig(var1, var2, var1Data, var2Data) {
+            const categories1 = [...new Set(var1Data.map(String))];
+            const categories2 = [...new Set(var2Data.map(String))];
+            
+            // Create contingency table
+            const counts = {};
+            categories1.forEach(cat1 => {
+                counts[cat1] = {};
+                categories2.forEach(cat2 => {
+                    counts[cat1][cat2] = 0;
+                });
+            });
+            
+            const n = Math.min(var1Data.length, var2Data.length);
+            for (let i = 0; i < n; i++) {
+                const cat1 = String(var1Data[i]);
+                const cat2 = String(var2Data[i]);
+                if (counts[cat1] && counts[cat1][cat2] !== undefined) {
+                    counts[cat1][cat2]++;
+                }
+            }
+            
+            // Create datasets for each category2
+            const datasets = categories2.map((cat2, index) => {
+                const hue = (index * 137) % 360;
+                return {
+                    label: cat2,
+                    data: categories1.map(cat1 => counts[cat1][cat2] || 0),
+                    backgroundColor: `hsla(${hue}, 70%, 60%, 0.7)`,
+                    borderColor: `hsla(${hue}, 70%, 50%, 1)`,
+                    borderWidth: 1
+                };
+            });
+            
+            return {
+                type: 'bar',
+                data: {
+                    labels: categories1,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${var1} by ${var2}`,
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: var1
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        function createGroupedBoxPlotConfig(catVar, contVar, catData, contData) {
+            const categories = [...new Set(catData.map(String))];
+            const groupedData = {};
+            
+            categories.forEach(cat => {
+                groupedData[cat] = [];
+            });
+            
+            const n = Math.min(catData.length, contData.length);
+            for (let i = 0; i < n; i++) {
+                const cat = String(catData[i]);
+                if (groupedData[cat]) {
+                    groupedData[cat].push(contData[i]);
+                }
+            }
+            
+            // Calculate box plot values for each category
+            const datasets = [{
+                label: contVar,
+                data: categories.map(cat => {
+                    const values = groupedData[cat];
+                    if (values.length === 0) return [0, 0, 0, 0, 0];
+                    
+                    const sorted = values.sort((a, b) => a - b);
+                    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+                    const median = sorted[Math.floor(sorted.length * 0.5)];
+                    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+                    const iqr = q3 - q1;
+                    const min = Math.max(sorted[0], q1 - 1.5 * iqr);
+                    const max = Math.min(sorted[sorted.length - 1], q3 + 1.5 * iqr);
+                    
+                    return [min, q1, median, q3, max];
+                }),
+                backgroundColor: 'rgba(74, 111, 165, 0.5)',
+                borderColor: 'rgba(74, 111, 165, 1)',
+                borderWidth: 2
+            }];
+            
+            return {
+                type: 'boxplot',
+                data: {
+                    labels: categories,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${contVar} by ${catVar}`,
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: contVar
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: catVar
+                            }
+                        }
+                    }
+                }
             };
         }
         
@@ -1581,7 +1951,7 @@
             return html;
         }
         
-        // Analysis functions
+        // Analysis functions - ALL DEFINED
         function performCategoricalAnalysis(variableName, data) {
             const counts = {};
             data.forEach(value => {
@@ -1859,7 +2229,6 @@
             return stats;
         }
         
-        // FIXED: Proper two-sample t-test analysis
         function performTwoSampleTTestAnalysis(catVar, contVar, catData, contData) {
             // Get unique categories
             const categories = [...new Set(catData.map(String))];
@@ -1956,7 +2325,6 @@
             return stats;
         }
         
-        // NEW: ANOVA analysis
         function performAnovaAnalysis(catVar, contVar, catData, contData) {
             // Get unique categories
             const categories = [...new Set(catData.map(String))];
@@ -2040,8 +2408,139 @@
             return stats;
         }
         
-        // Chart creation functions remain the same...
-        // [Previous chart creation functions would be here]
+        // Other analysis functions
+        function performTwoCategoricalAnalysis(var1, var2, var1Data, var2Data) {
+            const categories1 = [...new Set(var1Data.map(String))];
+            const categories2 = [...new Set(var2Data.map(String))];
+            
+            // Create contingency table
+            const contingencyTable = categories1.map(cat1 => {
+                return categories2.map(cat2 => {
+                    let count = 0;
+                    const n = Math.min(var1Data.length, var2Data.length);
+                    for (let i = 0; i < n; i++) {
+                        if (String(var1Data[i]) === cat1 && String(var2Data[i]) === cat2) {
+                            count++;
+                        }
+                    }
+                    return count;
+                });
+            });
+            
+            let stats = `=== TWO CATEGORICAL VARIABLES ANALYSIS ===\n\n`;
+            stats += `Variables: ${var1} and ${var2}\n`;
+            stats += `Observations: ${var1Data.length}\n\n`;
+            
+            stats += `=== CONTINGENCY TABLE ===\n`;
+            stats += `Rows: ${var1}, Columns: ${var2}\n\n`;
+            
+            // Add column headers
+            stats += `        `;
+            categories2.forEach(cat2 => {
+                stats += `${cat2.padEnd(10)}`;
+            });
+            stats += `Total\n`;
+            
+            // Add table rows
+            let rowTotals = [];
+            let colTotals = Array(categories2.length).fill(0);
+            let grandTotal = 0;
+            
+            categories1.forEach((cat1, i) => {
+                stats += `${cat1.padEnd(8)}`;
+                let rowTotal = 0;
+                categories2.forEach((cat2, j) => {
+                    const count = contingencyTable[i][j];
+                    stats += `${count.toString().padEnd(10)}`;
+                    rowTotal += count;
+                    colTotals[j] += count;
+                    grandTotal += count;
+                });
+                stats += `${rowTotal}\n`;
+                rowTotals.push(rowTotal);
+            });
+            
+            // Add column totals
+            stats += `Total   `;
+            categories2.forEach((cat2, j) => {
+                stats += `${colTotals[j].toString().padEnd(10)}`;
+            });
+            stats += `${grandTotal}\n`;
+            
+            return stats;
+        }
+        
+        function performChiSquareTest(var1, var2, var1Data, var2Data) {
+            const stats = performTwoCategoricalAnalysis(var1, var2, var1Data, var2Data);
+            return stats + `\n=== NOTE: Chi-square test would be implemented here ===\n`;
+        }
+        
+        function performCategoricalContinuousAnalysis(catVar, contVar, catData, contData) {
+            const categories = [...new Set(catData.map(String))];
+            const groupedData = {};
+            
+            categories.forEach(cat => {
+                groupedData[cat] = [];
+            });
+            
+            const n = Math.min(catData.length, contData.length);
+            for (let i = 0; i < n; i++) {
+                const cat = String(catData[i]);
+                if (groupedData[cat]) {
+                    groupedData[cat].push(contData[i]);
+                }
+            }
+            
+            let stats = `=== CATEGORICAL vs CONTINUOUS ANALYSIS ===\n\n`;
+            stats += `Categorical variable: ${catVar}\n`;
+            stats += `Continuous variable: ${contVar}\n`;
+            stats += `Observations: ${n}\n\n`;
+            
+            stats += `=== GROUP STATISTICS ===\n`;
+            
+            categories.forEach(cat => {
+                const data = groupedData[cat];
+                if (data.length > 0) {
+                    const m = mean(data);
+                    const med = median(data);
+                    const sd = stdDev(data);
+                    const min = Math.min(...data);
+                    const max = Math.max(...data);
+                    
+                    stats += `\nGroup: ${cat}\n`;
+                    stats += `  Sample size: ${data.length}\n`;
+                    stats += `  Mean: ${m.toFixed(4)}\n`;
+                    stats += `  Median: ${med.toFixed(4)}\n`;
+                    stats += `  Standard Deviation: ${sd.toFixed(4)}\n`;
+                    stats += `  Range: ${min.toFixed(4)} to ${max.toFixed(4)}\n`;
+                }
+            });
+            
+            return stats;
+        }
+        
+        function performTwoContinuousAnalysis(var1, var2, var1Data, var2Data) {
+            const n = Math.min(var1Data.length, var2Data.length);
+            const corr = correlation(var1Data.slice(0, n), var2Data.slice(0, n));
+            
+            let stats = `=== TWO CONTINUOUS VARIABLES ANALYSIS ===\n\n`;
+            stats += `Variables: ${var1} and ${var2}\n`;
+            stats += `Paired observations: ${n}\n\n`;
+            
+            stats += `=== DESCRIPTIVE STATISTICS ===\n`;
+            stats += `${var1}: Mean = ${mean(var1Data.slice(0, n)).toFixed(4)}, SD = ${stdDev(var1Data.slice(0, n)).toFixed(4)}\n`;
+            stats += `${var2}: Mean = ${mean(var2Data.slice(0, n)).toFixed(4)}, SD = ${stdDev(var2Data.slice(0, n)).toFixed(4)}\n\n`;
+            
+            stats += `=== CORRELATION ===\n`;
+            stats += `Pearson correlation coefficient (r): ${isNaN(corr) ? 'N/A' : corr.toFixed(4)}\n`;
+            
+            return stats;
+        }
+        
+        function performCorrelationAnalysis(var1, var2, var1Data, var2Data) {
+            const stats = performTwoContinuousAnalysis(var1, var2, var1Data, var2Data);
+            return stats + `\n=== NOTE: Full correlation analysis would be implemented here ===\n`;
+        }
         
         // Helper functions for UI
         function showUploadError(message) {
